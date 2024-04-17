@@ -52,6 +52,18 @@ Mkfile.old
 dkms.conf
 
 # Other
-*.pc
 *.version
+*.pc
 *.ver
+doc/examples/pc-uninstalled/
+ffbuild/config.log
+ffmpeg
+ffmpeg_g
+ffprobe
+ffprobe_g
+android/
+doc/config.texi
+ffbuild/.config
+ffbuild/config.fate
+ffbuild/config.mak
+ffbuild/config.sh
