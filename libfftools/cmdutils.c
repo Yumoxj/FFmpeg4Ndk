@@ -95,7 +95,8 @@ void exit_program(int ret)
     if (program_exit)
         program_exit(ret);
 
-    exit(ret);
+    longjmp(jump_buf, 1);
+    //exit(ret);
 }
 
 double parse_number_or_die(const char *context, const char *numstr, int type,
@@ -739,6 +740,16 @@ do {                                                                           \
         if (po->name) {
             if (po->flags & OPT_EXIT) {
                 /* optional argument, e.g. -h */
+                // av_log(NULL, AV_LOG_DEBUG, "argc %d, optindex %d\n", argc, optindex);
+                optindex ++;
+
+                if (optindex >= argc) {
+                    av_log(NULL, AV_LOG_DEBUG, " matched as option '%s' (%s) with "
+                        "empty argument.\n", po->name, po->help);
+                    add_opt(octx, po, opt, NULL);
+                    continue;
+                }
+
                 arg = argv[optindex++];
             } else if (po->flags & HAS_ARG) {
                 GET_ARG(arg);

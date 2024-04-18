@@ -190,6 +190,8 @@ static int copy_unknown_streams = 0;
 static int recast_media = 0;
 static int find_stream_info = 1;
 
+#define printf(...) av_log(NULL, AV_LOG_INFO, __VA_ARGS__)
+
 static void uninit_options(OptionsContext *o)
 {
     const OptionDef *po = options;

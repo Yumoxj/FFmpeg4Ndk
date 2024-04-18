@@ -1,5 +1,5 @@
 NAME = fftools
-DESC = FFmpeg plugins library
+DESC = FFmpeg tools library
 
 HEADERS = fftools.h       \
           version.h       \
@@ -13,3 +13,4 @@ OBJS = cmdutils.o        \
        ffmpeg_opt.o      \
        opt_common.o      \
        version.o         \
+       fftools.o         \

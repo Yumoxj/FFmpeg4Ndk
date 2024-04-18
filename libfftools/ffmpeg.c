@@ -4514,19 +4514,28 @@ static int64_t getmaxrss(void)
 #endif
 }
 
-int ff_tools_ffmpeg(int argc, char **argv)
+#include <setjmp.h>
+jmp_buf jump_buf;
+
+int ffmpeg_handle(int argc, char **argv)
 {
     int i, ret;
     BenchmarkTimeStamps ti;
 
     init_dynload();
 
-    register_exit(ffmpeg_cleanup);
+    //register_exit(ffmpeg_cleanup);
 
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
 
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
     parse_loglevel(argc, argv, options);
+
+    if (setjmp(jump_buf)) {
+        av_log(NULL, AV_LOG_INFO, "jmp to end\n");
+        main_return_code = 1;
+        goto end;
+    }
 
 #if CONFIG_AVDEVICE
     avdevice_register_all();
@@ -4575,6 +4584,10 @@ int ff_tools_ffmpeg(int argc, char **argv)
     if ((decode_error_stat[0] + decode_error_stat[1]) * max_error_rate < decode_error_stat[1])
         exit_program(69);
 
-    exit_program(received_nb_signals ? 255 : main_return_code);
+    // exit_program(received_nb_signals ? 255 : main_return_code);
+end:
+    av_log(NULL, AV_LOG_INFO, "ffmpeg result=%d\n", main_return_code);
+    ffmpeg_cleanup(0);
+
     return main_return_code;
 }

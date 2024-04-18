@@ -67,3 +67,4 @@ ffbuild/.config
 ffbuild/config.fate
 ffbuild/config.mak
 ffbuild/config.sh
+config.h

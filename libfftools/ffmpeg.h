@@ -704,4 +704,6 @@ void of_close(OutputFile **pof);
 void of_write_packet(OutputFile *of, AVPacket *pkt, OutputStream *ost,
                      int unqueue);
 
+int ffmpeg_handle(int argc, char **argv);
+
 #endif /* FFTOOLS_FFMPEG_H */
