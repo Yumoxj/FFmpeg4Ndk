@@ -9,7 +9,7 @@
 static AVMutex mutex = AV_MUTEX_INITIALIZER;
 static pthread_mutex_t g_init_mtx = PTHREAD_MUTEX_INITIALIZER;
 static int g_ref_cnt = 0;
-static int g_log_level_default = AV_LOG_DEBUG;
+static int g_log_level_default = AV_LOG_VERBOSE;
 
 static void(*g_msg_callback)(const char *msg, int level) = NULL;
 
@@ -113,7 +113,12 @@ int fftools_jni_set_java_vm(void *vm, void *log_ctx)
 
 int fftools_ffmpeg(int argc, char **argv)
 {
-    return ffmpeg_handle(argc, argv);
+    pthread_mutex_lock(&g_init_mtx);
+
+    int ret = ffmpeg_handle(argc, argv);
+
+    pthread_mutex_unlock(&g_init_mtx);
+    return ret;
 }
 
 const char* fftools_ffmpeg_version(void)

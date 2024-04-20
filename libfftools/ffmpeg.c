@@ -652,6 +652,7 @@ static void ffmpeg_cleanup(int ret)
     } else if (ret && atomic_load(&transcode_init_done)) {
         av_log(NULL, AV_LOG_INFO, "Conversion failed!\n");
     }
+
     term_exit();
     ffmpeg_exited = 1;
 }
@@ -4514,6 +4515,33 @@ static int64_t getmaxrss(void)
 #endif
 }
 
+void static reset_global_params()
+{
+    progress_avio = NULL;
+
+    subtitle_out  = NULL;
+
+    input_streams = NULL;
+    nb_input_streams = 0;
+    input_files   = NULL;
+    nb_input_files   = 0;
+
+    output_streams = NULL;
+    nb_output_streams = 0;
+    output_files   = NULL;
+    nb_output_files   = 0;
+
+    filtergraphs   = NULL;
+    nb_filtergraphs   = 0;
+
+    received_sigterm = 0;
+    received_nb_signals = 0;
+    transcode_init_done = ATOMIC_VAR_INIT(0);
+    ffmpeg_exited = 0;
+    main_return_code = 0;
+    copy_ts_first_pts = AV_NOPTS_VALUE;
+}
+
 #include <setjmp.h>
 jmp_buf jump_buf;
 
@@ -4522,9 +4550,11 @@ int ffmpeg_handle(int argc, char **argv)
     int i, ret;
     BenchmarkTimeStamps ti;
 
+    reset_global_params();
+
     init_dynload();
 
-    //register_exit(ffmpeg_cleanup);
+    register_exit(ffmpeg_cleanup);
 
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
 
@@ -4585,9 +4615,9 @@ int ffmpeg_handle(int argc, char **argv)
         exit_program(69);
 
     // exit_program(received_nb_signals ? 255 : main_return_code);
+    ffmpeg_cleanup(0);
 end:
     av_log(NULL, AV_LOG_INFO, "ffmpeg result=%d\n", main_return_code);
-    ffmpeg_cleanup(0);
 
     return main_return_code;
 }

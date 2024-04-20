@@ -55,6 +55,8 @@
 #include "compat/w32dlfcn.h"
 #endif
 
+#define printf(...) av_log(NULL, AV_LOG_INFO, __VA_ARGS__)
+
 AVDictionary *sws_dict;
 AVDictionary *swr_opts;
 AVDictionary *format_opts, *codec_opts;
