@@ -32,8 +32,8 @@
 #include "avcodec.h"
 #include "bytestream.h"
 #include "codec_internal.h"
+#include "decode.h"
 #include "get_bits.h"
-#include "internal.h"
 #include "thread.h"
 
 typedef struct CRIContext {
@@ -70,7 +70,6 @@ static av_cold int cri_decode_init(AVCodecContext *avctx)
         return AVERROR(ENOMEM);
     s->jpeg_avctx->flags = avctx->flags;
     s->jpeg_avctx->flags2 = avctx->flags2;
-    s->jpeg_avctx->dct_algo = avctx->dct_algo;
     s->jpeg_avctx->idct_algo = avctx->idct_algo;
     ret = avcodec_open2(s->jpeg_avctx, codec, NULL);
     if (ret < 0)
@@ -317,6 +316,9 @@ skip:
     if (!s->data || !s->data_size)
         return AVERROR_INVALIDDATA;
 
+    if (avctx->skip_frame >= AVDISCARD_ALL)
+        return avpkt->size;
+
     if ((ret = ff_thread_get_buffer(avctx, p, 0)) < 0)
         return ret;
 
@@ -396,8 +398,8 @@ skip:
     }
 
     if (hflip || vflip) {
-        rotation = av_frame_new_side_data(p, AV_FRAME_DATA_DISPLAYMATRIX,
-                                          sizeof(int32_t) * 9);
+        ff_frame_new_side_data(avctx, p, AV_FRAME_DATA_DISPLAYMATRIX,
+                               sizeof(int32_t) * 9, &rotation);
         if (rotation) {
             av_display_rotation_set((int32_t *)rotation->data, 0.f);
             av_display_matrix_flip((int32_t *)rotation->data, hflip, vflip);
@@ -405,7 +407,7 @@ skip:
     }
 
     p->pict_type = AV_PICTURE_TYPE_I;
-    p->key_frame = 1;
+    p->flags |= AV_FRAME_FLAG_KEY;
 
     *got_frame = 1;
 
@@ -432,6 +434,7 @@ const FFCodec ff_cri_decoder = {
     FF_CODEC_DECODE_CB(cri_decode_frame),
     .close          = cri_decode_close,
     .p.capabilities = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_FRAME_THREADS,
-    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
-    .p.long_name    = NULL_IF_CONFIG_SMALL("Cintel RAW"),
+    .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP |
+                      FF_CODEC_CAP_SKIP_FRAME_FILL_PARAM,
+    CODEC_LONG_NAME("Cintel RAW"),
 };

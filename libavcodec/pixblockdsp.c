@@ -24,7 +24,7 @@
 #include "avcodec.h"
 #include "pixblockdsp.h"
 
-static void get_pixels_16_c(int16_t *av_restrict block, const uint8_t *pixels,
+static void get_pixels_16_c(int16_t *restrict block, const uint8_t *pixels,
                             ptrdiff_t stride)
 {
     AV_COPY128U(block + 0 * 8, pixels + 0 * stride);
@@ -37,7 +37,7 @@ static void get_pixels_16_c(int16_t *av_restrict block, const uint8_t *pixels,
     AV_COPY128U(block + 7 * 8, pixels + 7 * stride);
 }
 
-static void get_pixels_8_c(int16_t *av_restrict block, const uint8_t *pixels,
+static void get_pixels_8_c(int16_t *restrict block, const uint8_t *pixels,
                            ptrdiff_t stride)
 {
     int i;
@@ -57,7 +57,7 @@ static void get_pixels_8_c(int16_t *av_restrict block, const uint8_t *pixels,
     }
 }
 
-static void diff_pixels_c(int16_t *av_restrict block, const uint8_t *s1,
+static void diff_pixels_c(int16_t *restrict block, const uint8_t *s1,
                           const uint8_t *s2, ptrdiff_t stride)
 {
     int i;
@@ -109,6 +109,8 @@ av_cold void ff_pixblockdsp_init(PixblockDSPContext *c, AVCodecContext *avctx)
     ff_pixblockdsp_init_arm(c, avctx, high_bit_depth);
 #elif ARCH_PPC
     ff_pixblockdsp_init_ppc(c, avctx, high_bit_depth);
+#elif ARCH_RISCV
+    ff_pixblockdsp_init_riscv(c, avctx, high_bit_depth);
 #elif ARCH_X86
     ff_pixblockdsp_init_x86(c, avctx, high_bit_depth);
 #elif ARCH_MIPS

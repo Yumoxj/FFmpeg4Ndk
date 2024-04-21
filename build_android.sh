@@ -16,14 +16,12 @@ echo "Compiling FFmpeg for $CPU"
  --enable-small \
  --disable-vulkan \
  --disable-gpl \
- --disable-postproc \
  --enable-jni \
  --enable-mediacodec \
  --disable-doc \
  --enable-ffmpeg \
  --disable-ffplay \
  --enable-ffprobe \
- --disable-avdevice \
  --disable-symver \
  --enable-cross-compile \
  --cross-prefix=$CROSS_PREFIX \
@@ -35,6 +33,8 @@ echo "Compiling FFmpeg for $CPU"
  --sysroot=$SYSROOT \
  --extra-cflags="-mno-stackrealign -Os -fpic -mfpu=neon $OPTIMIZE_CFLAGS" \
  --extra-ldflags="$ADDI_LDFLAGS"
+ #--disable-avdevice
+ #--disable-postproc
  #--enable-decoder=h264_mediacodec
  #--disable-ffmpeg
  #--disable-programs

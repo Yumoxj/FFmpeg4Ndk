@@ -32,12 +32,10 @@
 #include <stdint.h>
 
 #include "libavutil/mem_internal.h"
+#include "libavutil/tx.h"
 
-#include "fft.h"
 #include "aacps.h"
 #include "sbrdsp.h"
-
-typedef struct AACContext AACContext;
 
 /**
  * Spectral Band Replication header - spectrum parameters that invoke a reset if they differ from the previous header.
@@ -121,7 +119,7 @@ typedef struct SpectralBandReplication SpectralBandReplication;
  * aacsbr functions pointers
  */
 typedef struct AACSBRContext {
-    int (*sbr_lf_gen)(AACContext *ac, SpectralBandReplication *sbr,
+    int (*sbr_lf_gen)(SpectralBandReplication *sbr,
                       INTFLOAT X_low[32][40][2], const INTFLOAT W[2][32][32][2],
                       int buf_idx);
     void (*sbr_hf_assemble)(INTFLOAT Y1[38][64][2],
@@ -211,8 +209,10 @@ struct SpectralBandReplication {
     AAC_FLOAT          s_m[7][48];
     AAC_FLOAT          gain[7][48];
     DECLARE_ALIGNED(32, INTFLOAT, qmf_filter_scratch)[5][64];
-    FFTContext         mdct_ana;
-    FFTContext         mdct;
+    AVTXContext       *mdct_ana;
+    av_tx_fn           mdct_ana_fn;
+    AVTXContext       *mdct;
+    av_tx_fn           mdct_fn;
     SBRDSPContext      dsp;
     AACSBRContext      c;
 };

@@ -408,18 +408,11 @@ static int mp3_read_header(AVFormatContext *s)
             ffio_ensure_seekback(s->pb, i + 1024 + 4);
         frame_size = check(s->pb, off + i, &header);
         if (frame_size > 0) {
-            ret = avio_seek(s->pb, off, SEEK_SET);
-            if (ret < 0)
-                return ret;
             ffio_ensure_seekback(s->pb, i + 1024 + frame_size + 4);
             ret = check(s->pb, off + i + frame_size, &header2);
             if (ret >= 0 &&
                 (header & MP3_MASK) == (header2 & MP3_MASK))
             {
-                av_log(s, i > 0 ? AV_LOG_INFO : AV_LOG_VERBOSE, "Skipping %d bytes of junk at %"PRId64".\n", i, off);
-                ret = avio_seek(s->pb, off + i, SEEK_SET);
-                if (ret < 0)
-                    return ret;
                 break;
             } else if (ret == CHECK_SEEK_FAILED) {
                 av_log(s, AV_LOG_ERROR, "Invalid frame size (%d): Could not seek to %"PRId64".\n", frame_size, off + i + frame_size);
@@ -429,12 +422,16 @@ static int mp3_read_header(AVFormatContext *s)
             av_log(s, AV_LOG_ERROR, "Failed to read frame size: Could not seek to %"PRId64".\n", (int64_t) (i + 1024 + frame_size + 4));
             return AVERROR(EINVAL);
         }
-        ret = avio_seek(s->pb, off, SEEK_SET);
-        if (ret < 0)
-            return ret;
     }
+    if (i == 64 * 1024) {
+        off = avio_seek(s->pb, off, SEEK_SET);
+    } else {
+        av_log(s, i > 0 ? AV_LOG_INFO : AV_LOG_VERBOSE, "Skipping %d bytes of junk at %"PRId64".\n", i, off);
+        off = avio_seek(s->pb, off + i, SEEK_SET);
+    }
+    if (off < 0)
+        return off;
 
-    off = avio_tell(s->pb);
     // the seek index is relative to the end of the xing vbr headers
     for (int i = 0; i < sti->nb_index_entries; i++)
         sti->index_entries[i].pos += off;
@@ -613,15 +610,15 @@ static const AVClass demuxer_class = {
     .category   = AV_CLASS_CATEGORY_DEMUXER,
 };
 
-const AVInputFormat ff_mp3_demuxer = {
-    .name           = "mp3",
-    .long_name      = NULL_IF_CONFIG_SMALL("MP2/3 (MPEG audio layer 2/3)"),
+const FFInputFormat ff_mp3_demuxer = {
+    .p.name         = "mp3",
+    .p.long_name    = NULL_IF_CONFIG_SMALL("MP2/3 (MPEG audio layer 2/3)"),
+    .p.flags        = AVFMT_GENERIC_INDEX,
+    .p.extensions   = "mp2,mp3,m2a,mpa", /* XXX: use probe */
+    .p.priv_class   = &demuxer_class,
     .read_probe     = mp3_read_probe,
     .read_header    = mp3_read_header,
     .read_packet    = mp3_read_packet,
     .read_seek      = mp3_seek,
     .priv_data_size = sizeof(MP3DecContext),
-    .flags          = AVFMT_GENERIC_INDEX,
-    .extensions     = "mp2,mp3,m2a,mpa", /* XXX: use probe */
-    .priv_class     = &demuxer_class,
 };

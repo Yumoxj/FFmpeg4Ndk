@@ -5,8 +5,8 @@
 
 #include "version_major.h"
 
-#define LIBFFTOOLS_VERSION_MINOR   6
-#define LIBFFTOOLS_VERSION_MICRO 100
+#define LIBFFTOOLS_VERSION_MINOR   0
+#define LIBFFTOOLS_VERSION_MICRO   0
 
 #define LIBFFTOOLS_VERSION_INT AV_VERSION_INT(LIBFFTOOLS_VERSION_MAJOR, \
                                                LIBFFTOOLS_VERSION_MINOR, \

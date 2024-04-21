@@ -117,7 +117,7 @@ typedef struct SliceArgs {
 typedef struct TransformArgs {
     void *ctx;
     Plane *plane;
-    void *idata;
+    const void *idata;
     ptrdiff_t istride;
     int field;
     VC2TransformContext t;
@@ -233,7 +233,7 @@ static void encode_parse_info(VC2EncContext *s, enum DiracParseCodes pcode)
 
     align_put_bits(&s->pb);
 
-    cur_pos = put_bits_count(&s->pb) >> 3;
+    cur_pos = put_bytes_count(&s->pb, 0);
 
     /* Magic string */
     ff_put_string(&s->pb, "BBCD", 0);
@@ -746,7 +746,7 @@ static int encode_hq_slice(AVCodecContext *avctx, void *arg)
     /* Luma + 2 Chroma planes */
     for (p = 0; p < 3; p++) {
         int bytes_start, bytes_len, pad_s, pad_c;
-        bytes_start = put_bits_count(pb) >> 3;
+        bytes_start = put_bytes_count(pb, 0);
         put_bits(pb, 8, 0);
         for (level = 0; level < s->wavelet_depth; level++) {
             for (orientation = !!level; orientation < 4; orientation++) {
@@ -755,10 +755,10 @@ static int encode_hq_slice(AVCodecContext *avctx, void *arg)
                                quants[level][orientation]);
             }
         }
-        align_put_bits(pb);
-        bytes_len = (put_bits_count(pb) >> 3) - bytes_start - 1;
+        flush_put_bits(pb);
+        bytes_len = put_bytes_output(pb) - bytes_start - 1;
         if (p == 2) {
-            int len_diff = slice_bytes_max - (put_bits_count(pb) >> 3);
+            int len_diff = slice_bytes_max - put_bytes_output(pb);
             pad_s = FFALIGN((bytes_len + len_diff), s->size_scaler)/s->size_scaler;
             pad_c = (pad_s*s->size_scaler) - bytes_len;
         } else {
@@ -766,7 +766,6 @@ static int encode_hq_slice(AVCodecContext *avctx, void *arg)
             pad_c = (pad_s*s->size_scaler) - bytes_len;
         }
         pb->buf[bytes_start] = pad_s;
-        flush_put_bits(pb);
         /* vc2-reference uses that padding that decodes to '0' coeffs */
         memset(put_bits_ptr(pb), 0xFF, pad_c);
         skip_put_bytes(pb, pad_c);
@@ -1188,19 +1187,19 @@ static av_cold int vc2_encode_init(AVCodecContext *avctx)
 
 #define VC2ENC_FLAGS (AV_OPT_FLAG_ENCODING_PARAM | AV_OPT_FLAG_VIDEO_PARAM)
 static const AVOption vc2enc_options[] = {
-    {"tolerance",     "Max undershoot in percent", offsetof(VC2EncContext, tolerance), AV_OPT_TYPE_DOUBLE, {.dbl = 5.0f}, 0.0f, 45.0f, VC2ENC_FLAGS, "tolerance"},
-    {"slice_width",   "Slice width",  offsetof(VC2EncContext, slice_width), AV_OPT_TYPE_INT, {.i64 = 32}, 32, 1024, VC2ENC_FLAGS, "slice_width"},
-    {"slice_height",  "Slice height", offsetof(VC2EncContext, slice_height), AV_OPT_TYPE_INT, {.i64 = 16}, 8, 1024, VC2ENC_FLAGS, "slice_height"},
-    {"wavelet_depth", "Transform depth", offsetof(VC2EncContext, wavelet_depth), AV_OPT_TYPE_INT, {.i64 = 4}, 1, 5, VC2ENC_FLAGS, "wavelet_depth"},
-    {"wavelet_type",  "Transform type",  offsetof(VC2EncContext, wavelet_idx), AV_OPT_TYPE_INT, {.i64 = VC2_TRANSFORM_9_7}, 0, VC2_TRANSFORMS_NB, VC2ENC_FLAGS, "wavelet_idx"},
-        {"9_7",          "Deslauriers-Dubuc (9,7)", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_9_7},    INT_MIN, INT_MAX, VC2ENC_FLAGS, "wavelet_idx"},
-        {"5_3",          "LeGall (5,3)",            0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_5_3},    INT_MIN, INT_MAX, VC2ENC_FLAGS, "wavelet_idx"},
-        {"haar",         "Haar (with shift)",       0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_HAAR_S}, INT_MIN, INT_MAX, VC2ENC_FLAGS, "wavelet_idx"},
-        {"haar_noshift", "Haar (without shift)",    0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_HAAR},   INT_MIN, INT_MAX, VC2ENC_FLAGS, "wavelet_idx"},
-    {"qm", "Custom quantization matrix", offsetof(VC2EncContext, quant_matrix), AV_OPT_TYPE_INT, {.i64 = VC2_QM_DEF}, 0, VC2_QM_NB, VC2ENC_FLAGS, "quant_matrix"},
-        {"default",   "Default from the specifications", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_QM_DEF}, INT_MIN, INT_MAX, VC2ENC_FLAGS, "quant_matrix"},
-        {"color",     "Prevents low bitrate discoloration", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_QM_COL}, INT_MIN, INT_MAX, VC2ENC_FLAGS, "quant_matrix"},
-        {"flat",      "Optimize for PSNR", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_QM_FLAT}, INT_MIN, INT_MAX, VC2ENC_FLAGS, "quant_matrix"},
+    {"tolerance",     "Max undershoot in percent", offsetof(VC2EncContext, tolerance), AV_OPT_TYPE_DOUBLE, {.dbl = 5.0f}, 0.0f, 45.0f, VC2ENC_FLAGS, .unit = "tolerance"},
+    {"slice_width",   "Slice width",  offsetof(VC2EncContext, slice_width), AV_OPT_TYPE_INT, {.i64 = 32}, 32, 1024, VC2ENC_FLAGS, .unit = "slice_width"},
+    {"slice_height",  "Slice height", offsetof(VC2EncContext, slice_height), AV_OPT_TYPE_INT, {.i64 = 16}, 8, 1024, VC2ENC_FLAGS, .unit = "slice_height"},
+    {"wavelet_depth", "Transform depth", offsetof(VC2EncContext, wavelet_depth), AV_OPT_TYPE_INT, {.i64 = 4}, 1, 5, VC2ENC_FLAGS, .unit = "wavelet_depth"},
+    {"wavelet_type",  "Transform type",  offsetof(VC2EncContext, wavelet_idx), AV_OPT_TYPE_INT, {.i64 = VC2_TRANSFORM_9_7}, 0, VC2_TRANSFORMS_NB, VC2ENC_FLAGS, .unit = "wavelet_idx"},
+        {"9_7",          "Deslauriers-Dubuc (9,7)", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_9_7},    INT_MIN, INT_MAX, VC2ENC_FLAGS, .unit = "wavelet_idx"},
+        {"5_3",          "LeGall (5,3)",            0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_5_3},    INT_MIN, INT_MAX, VC2ENC_FLAGS, .unit = "wavelet_idx"},
+        {"haar",         "Haar (with shift)",       0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_HAAR_S}, INT_MIN, INT_MAX, VC2ENC_FLAGS, .unit = "wavelet_idx"},
+        {"haar_noshift", "Haar (without shift)",    0, AV_OPT_TYPE_CONST, {.i64 = VC2_TRANSFORM_HAAR},   INT_MIN, INT_MAX, VC2ENC_FLAGS, .unit = "wavelet_idx"},
+    {"qm", "Custom quantization matrix", offsetof(VC2EncContext, quant_matrix), AV_OPT_TYPE_INT, {.i64 = VC2_QM_DEF}, 0, VC2_QM_NB, VC2ENC_FLAGS, .unit = "quant_matrix"},
+        {"default",   "Default from the specifications", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_QM_DEF}, INT_MIN, INT_MAX, VC2ENC_FLAGS, .unit = "quant_matrix"},
+        {"color",     "Prevents low bitrate discoloration", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_QM_COL}, INT_MIN, INT_MAX, VC2ENC_FLAGS, .unit = "quant_matrix"},
+        {"flat",      "Optimize for PSNR", 0, AV_OPT_TYPE_CONST, {.i64 = VC2_QM_FLAT}, INT_MIN, INT_MAX, VC2ENC_FLAGS, .unit = "quant_matrix"},
     {NULL}
 };
 
@@ -1226,11 +1225,12 @@ static const enum AVPixelFormat allowed_pix_fmts[] = {
 
 const FFCodec ff_vc2_encoder = {
     .p.name         = "vc2",
-    .p.long_name    = NULL_IF_CONFIG_SMALL("SMPTE VC-2"),
+    CODEC_LONG_NAME("SMPTE VC-2"),
     .p.type         = AVMEDIA_TYPE_VIDEO,
     .p.id           = AV_CODEC_ID_DIRAC,
-    .p.capabilities = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_SLICE_THREADS,
-    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
+    .p.capabilities = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_SLICE_THREADS |
+                      AV_CODEC_CAP_ENCODER_REORDERED_OPAQUE,
+    .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
     .priv_data_size = sizeof(VC2EncContext),
     .init           = vc2_encode_init,
     .close          = vc2_encode_end,

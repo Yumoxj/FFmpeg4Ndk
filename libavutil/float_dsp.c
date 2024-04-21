@@ -109,7 +109,7 @@ static void vector_fmul_reverse_c(float *dst, const float *src0,
         dst[i] = src0[i] * src1[-i];
 }
 
-static void butterflies_float_c(float *av_restrict v1, float *av_restrict v2,
+static void butterflies_float_c(float *restrict v1, float *restrict v2,
                                 int len)
 {
     int i;
@@ -156,6 +156,8 @@ av_cold AVFloatDSPContext *avpriv_float_dsp_alloc(int bit_exact)
     ff_float_dsp_init_arm(fdsp);
 #elif ARCH_PPC
     ff_float_dsp_init_ppc(fdsp, bit_exact);
+#elif ARCH_RISCV
+    ff_float_dsp_init_riscv(fdsp);
 #elif ARCH_X86
     ff_float_dsp_init_x86(fdsp);
 #elif ARCH_MIPS

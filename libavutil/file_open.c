@@ -17,7 +17,8 @@
  */
 
 #include "config.h"
-#include "internal.h"
+#include "avutil.h"
+#include "file_open.h"
 #include "mem.h"
 #include <stdarg.h>
 #include <fcntl.h>
@@ -188,10 +189,3 @@ FILE *avpriv_fopen_utf8(const char *path, const char *mode)
         return NULL;
     return fdopen(fd, mode);
 }
-
-#if FF_API_AV_FOPEN_UTF8
-FILE *av_fopen_utf8(const char *path, const char *mode)
-{
-    return avpriv_fopen_utf8(path, mode);
-}
-#endif

@@ -20,7 +20,6 @@
 
 #include <string.h>
 
-#include "libavcodec/avcodec.h"
 #include "libavcodec/vp8dsp.h"
 
 #include "libavutil/common.h"
@@ -384,7 +383,7 @@ static void check_loopfilter_16y(void)
     VP8DSPContext d;
     int dir, edge, force_hev;
     int flim_E = 20, flim_I = 10, hev_thresh = 7;
-    declare_func_emms(AV_CPU_FLAG_MMX, void, uint8_t *, ptrdiff_t, int, int, int);
+    declare_func(void, uint8_t *, ptrdiff_t, int, int, int);
 
     ff_vp8dsp_init(&d);
 
@@ -430,7 +429,7 @@ static void check_loopfilter_8uv(void)
     VP8DSPContext d;
     int dir, edge, force_hev;
     int flim_E = 20, flim_I = 10, hev_thresh = 7;
-    declare_func_emms(AV_CPU_FLAG_MMX, void, uint8_t *, uint8_t *, ptrdiff_t, int, int, int);
+    declare_func(void, uint8_t *, uint8_t *, ptrdiff_t, int, int, int);
 
     ff_vp8dsp_init(&d);
 
@@ -481,7 +480,7 @@ static void check_loopfilter_simple(void)
     VP8DSPContext d;
     int dir;
     int flim_E = 20, flim_I = 30, hev_thresh = 0;
-    declare_func_emms(AV_CPU_FLAG_MMX, void, uint8_t *, ptrdiff_t, int);
+    declare_func(void, uint8_t *, ptrdiff_t, int);
 
     ff_vp8dsp_init(&d);
 
