@@ -56,7 +56,8 @@
 #include "compat/w32dlfcn.h"
 #endif
 
-#define printf(...) av_log(NULL, AV_LOG_INFO, __VA_ARGS__)
+#define LOG_PREFIX "show_help: "
+#define printf(...) av_log(NULL, AV_LOG_INFO, LOG_PREFIX __VA_ARGS__)
 
 AVDictionary *sws_dict;
 AVDictionary *swr_opts;

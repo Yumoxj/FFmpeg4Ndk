@@ -54,7 +54,8 @@
 #include "libavutil/pixdesc.h"
 #include "libavutil/pixfmt.h"
 
-#define printf(...) av_log(NULL, AV_LOG_INFO, __VA_ARGS__)
+#define LOG_PREFIX "show_help: "
+#define printf(...) av_log(NULL, AV_LOG_INFO, LOG_PREFIX __VA_ARGS__)
 
 HWDevice *filter_hw_device;
 

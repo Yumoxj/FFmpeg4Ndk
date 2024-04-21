@@ -63,7 +63,8 @@
 #include "libpostproc/postprocess.h"
 #include "libpostproc/version.h"
 
-#define printf(...) av_log(NULL, AV_LOG_INFO, __VA_ARGS__)
+#define LOG_PREFIX "show_help: "
+#define printf(...) av_log(NULL, AV_LOG_INFO, LOG_PREFIX __VA_ARGS__)
 
 enum show_muxdemuxers {
     SHOW_DEFAULT,

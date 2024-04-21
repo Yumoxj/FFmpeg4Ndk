@@ -79,3 +79,4 @@ libavformat/demuxer_list.c
 libavformat/muxer_list.c
 libavformat/protocol_list.c
 libavutil/avconfig.h
+libavutil/ffversion.h
