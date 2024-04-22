@@ -1,0 +1,7 @@
+Based on openh264 v2.4.1
+
+NDKROOT=$NDK_PATH: Sets the path to the Android NDK. The $NDK_PATH should be replaced with the actual path.
+
+make OS=android TARGET=android-21 PREFIX=arm64 ARCH=arm64 NDKROOT=$NDK_PATH install
+
+make OS=android TARGET=android-21 PREFIX=arm ARCH=arm NDKROOT=$NDK_PATH install

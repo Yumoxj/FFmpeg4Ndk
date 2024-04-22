@@ -15,7 +15,10 @@ echo "Compiling FFmpeg for $CPU"
  --enable-shared \
  --enable-small \
  --disable-vulkan \
- --disable-gpl \
+ --disable-autodetect \
+ --enable-gpl \
+ --enable-libopenh264 \
+ --enable-decoder=libopenh264 \
  --enable-jni \
  --enable-mediacodec \
  --disable-doc \
@@ -31,7 +34,7 @@ echo "Compiling FFmpeg for $CPU"
  --cc=$CC \
  --cxx=$CXX \
  --sysroot=$SYSROOT \
- --extra-cflags="-mno-stackrealign -Os -fpic -mfpu=neon $OPTIMIZE_CFLAGS" \
+ --extra-cflags="-mno-stackrealign -Os -fpic -mfpu=neon $ADDI_CFLAGS $OPTIMIZE_CFLAGS" \
  --extra-ldflags="$ADDI_LDFLAGS"
  #--disable-avdevice
  #--disable-postproc
@@ -79,7 +82,8 @@ elif [ "$CPU" = "armv7-a" ]; then
     SYSROOT=$TOOLCHAIN/sysroot
     CROSS_PREFIX=$TOOLCHAIN/bin/llvm-
     PREFIX=$(pwd)/android/$CPU
-    ADDI_LDFLAGS=" "
+    ADDI_CFLAGS="-I$(pwd)/libopenh264/include"
+    ADDI_LDFLAGS="-L$(pwd)/libopenh264/$ARCH/lib"
     OPTIMIZE_CFLAGS="-mfloat-abi=softfp -march=$CPU"
     build_android
 elif [ "$CPU" = "armv8-a" ]; then
@@ -89,6 +93,8 @@ elif [ "$CPU" = "armv8-a" ]; then
     SYSROOT=$TOOLCHAIN/sysroot
     CROSS_PREFIX=$TOOLCHAIN/bin/llvm-
     PREFIX=$(pwd)/android/$CPU
+    ADDI_CFLAGS="-I$(pwd)/libopenh264/include"
+    ADDI_LDFLAGS="-L$(pwd)/libopenh264/$ARCH/lib"
     OPTIMIZE_CFLAGS="-march=$CPU"
     build_android
 else
